@@ -39,7 +39,10 @@ export function FeedbackModal({
     if (corrections[key] !== undefined) {
       return corrections[key];
     }
-    return String(originalValue ?? '');
+    if (originalValue === null || originalValue === undefined) {
+      return '';
+    }
+    return String(originalValue);
   };
 
   return (

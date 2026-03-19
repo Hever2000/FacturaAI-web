@@ -66,9 +66,11 @@ export function Demo() {
       const jobResponse = await fetch(`/api/proxy/jobs/${data.job_id}`);
       const jobData = await jobResponse.json();
 
+      const plainText = jobData.plain_text || jobData.full_text || jobData.raw_text || '';
+
       setResult({
         jobId: data.job_id,
-        rawText: jobData.full_text || '',
+        rawText: plainText,
         extractedData: jobData.extracted_data || {},
       });
       setStatus('success');
