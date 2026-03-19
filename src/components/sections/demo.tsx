@@ -256,12 +256,12 @@ export function Demo() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">Texto Extraído (OCR)</CardTitle>
-                      <CardDescription>Texto reconocido por PaddleOCR-VL</CardDescription>
+                      <CardTitle className="text-lg">Texto Plano</CardTitle>
+                      <CardDescription>Texto extraído directamente de la factura</CardDescription>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="max-h-[200px] overflow-y-auto rounded-lg bg-muted p-4 font-mono text-sm">
+                    <div className="max-h-[200px] overflow-y-auto rounded-lg bg-muted p-4 font-mono text-sm whitespace-pre-wrap">
                       {result.rawText || 'No se pudo extraer texto'}
                     </div>
                   </CardContent>
