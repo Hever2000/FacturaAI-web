@@ -55,8 +55,8 @@ src/
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/facturaai-web.git
-cd facturaai-web
+git clone https://github.com/Hever2000/FacturaAI-web.git
+cd FacturaAI-web
 
 # Instalar dependencias
 npm install
@@ -134,7 +134,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 ## 👨‍💻 Autor
 
-**Tu Nombre** - [@tu-usuario](https://twitter.com/tu-usuario)
+**Hever2000** - [https://github.com/Hever2000](https://github.com/Hever2000)
 
 ---
 
