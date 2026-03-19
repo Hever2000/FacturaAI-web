@@ -3,64 +3,23 @@
 import { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileJson, Copy, Check, Loader2, Image, AlertCircle } from 'lucide-react';
+import { FeedbackModal } from '@/components/ui/feedback-modal';
+import { Upload, FileJson, Copy, Check, Loader2, Image, AlertCircle, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'success' | 'error';
 
 interface ProcessingResult {
+  jobId: string;
   rawText: string;
   extractedData: Record<string, unknown>;
 }
 
-const MOCK_INVOICE_DATA = {
-  tipo: 'Factura B',
-  puntoVenta: '0001',
-  numeroComprobante: '00004567',
-  fecha: '19/03/2026',
-  cuitemisor: '30-12345678-9',
-  nombreEmisor: 'Comercial Argentina S.A.',
-  domicilioEmisor: 'Av. Corrientes 1234, CABA',
-  cuittitular: '20-12345678-9',
-  nombreTitular: 'Juan Pérez',
-  domicilioTitular: 'Calle Falsa 123, Buenos Aires',
-  condicionIva: 'Responsable Inscripto',
-  importeTotal: 15250.0,
-  importeNeto: 12603.31,
-  importeIva: 2646.69,
-  importeTributos: 0,
-  codigoBarras: '12345678901234567890123456789012345',
-  items: [
-    {
-      descripcion: 'Producto A',
-      cantidad: 5,
-      precioUnitario: 1500.0,
-      alicuotaIva: 21,
-      importe: 9075.0,
-    },
-    {
-      descripcion: 'Producto B',
-      cantidad: 3,
-      precioUnitario: 1200.0,
-      alicuotaIva: 21,
-      importe: 4356.0,
-    },
-  ],
-};
-
-const MOCK_RAW_TEXT = `FACTURA B
-Punto de Venta: 0001 Comprobante Nro: 00004567
-Fecha: 19/03/2026
-CUIT Emisor: 30-12345678-9
-Nombre/Razón Social: Comercial Argentina S.A.
-Domicilio Comercial: Av. Corrientes 1234, CABA
-CUIT Titular: 20-12345678-9
-Nombre Titular: Juan Pérez
-Domicilio Titular: Calle Falsa 123, Buenos Aires
-Condición IVA: Responsable Inscripto
-Importe Total: $15.250,00
-Importe Neto: $12.603,31
-Importe IVA: $2.646,69`;
+interface FeedbackData {
+  jobId: string;
+  extractedData: Record<string, unknown>;
+  rawText: string;
+}
 
 export function Demo() {
   const [status, setStatus] = useState<ProcessingStatus>('idle');
@@ -70,6 +29,8 @@ export function Demo() {
   const [result, setResult] = useState<ProcessingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
 
   const processFile = useCallback(async (file: File) => {
     setFile(file);
@@ -106,6 +67,7 @@ export function Demo() {
       const jobData = await jobResponse.json();
 
       setResult({
+        jobId: data.job_id,
         rawText: jobData.full_text || '',
         extractedData: jobData.extracted_data || {},
       });
@@ -115,6 +77,34 @@ export function Demo() {
       setStatus('error');
     }
   }, []);
+
+  const handleFeedbackSubmit = useCallback(
+    async (corrections: Record<string, unknown>) => {
+      if (!feedbackData) return;
+
+      try {
+        const response = await fetch('/api/proxy/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            job_id: feedbackData.jobId,
+            extracted_data: feedbackData.extractedData,
+            corrections,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Error sending feedback');
+        }
+
+        setShowFeedbackModal(false);
+        alert('¡Gracias! Tu corrección ha sido enviada para mejorar el modelo.');
+      } catch (err) {
+        alert('Error al enviar la corrección. Intenta de nuevo.');
+      }
+    },
+    [feedbackData]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -286,19 +276,42 @@ export function Demo() {
                       </CardTitle>
                       <CardDescription>Datos extraídos por IA</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={copyToClipboard} className="gap-2">
-                      {copied ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Copiado
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4" />
-                          Copiar
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyToClipboard}
+                        className="gap-2"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Copiado
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4" />
+                            Copiar
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFeedbackData({
+                            jobId: result.jobId,
+                            extractedData: result.extractedData,
+                            rawText: result.rawText,
+                          });
+                          setShowFeedbackModal(true);
+                        }}
+                        className="gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Corregir
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="max-h-[400px] overflow-y-auto rounded-lg bg-muted p-4">
@@ -327,6 +340,16 @@ export function Demo() {
           </div>
         </div>
       </div>
+
+      {showFeedbackModal && feedbackData && (
+        <FeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          jobId={feedbackData.jobId}
+          extractedData={feedbackData.extractedData}
+          onSubmit={handleFeedbackSubmit}
+        />
+      )}
     </section>
   );
 }
