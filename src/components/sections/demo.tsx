@@ -1,20 +1,69 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Upload, FileJson, Copy, Check, Loader2, Image, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Upload, FileJson, Copy, Check, Loader2, Image, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-type ProcessingStatus = "idle" | "uploading" | "processing" | "success" | "error";
+type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'success' | 'error';
 
 interface ProcessingResult {
   rawText: string;
   extractedData: Record<string, unknown>;
 }
 
+const MOCK_INVOICE_DATA = {
+  tipo: 'Factura B',
+  puntoVenta: '0001',
+  numeroComprobante: '00004567',
+  fecha: '19/03/2026',
+  cuitemisor: '30-12345678-9',
+  nombreEmisor: 'Comercial Argentina S.A.',
+  domicilioEmisor: 'Av. Corrientes 1234, CABA',
+  cuittitular: '20-12345678-9',
+  nombreTitular: 'Juan Pérez',
+  domicilioTitular: 'Calle Falsa 123, Buenos Aires',
+  condicionIva: 'Responsable Inscripto',
+  importeTotal: 15250.0,
+  importeNeto: 12603.31,
+  importeIva: 2646.69,
+  importeTributos: 0,
+  codigoBarras: '12345678901234567890123456789012345',
+  items: [
+    {
+      descripcion: 'Producto A',
+      cantidad: 5,
+      precioUnitario: 1500.0,
+      alicuotaIva: 21,
+      importe: 9075.0,
+    },
+    {
+      descripcion: 'Producto B',
+      cantidad: 3,
+      precioUnitario: 1200.0,
+      alicuotaIva: 21,
+      importe: 4356.0,
+    },
+  ],
+};
+
+const MOCK_RAW_TEXT = `FACTURA B
+Punto de Venta: 0001 Comprobante Nro: 00004567
+Fecha: 19/03/2026
+CUIT Emisor: 30-12345678-9
+Nombre/Razón Social: Comercial Argentina S.A.
+Domicilio Comercial: Av. Corrientes 1234, CABA
+CUIT Titular: 20-12345678-9
+Nombre Titular: Juan Pérez
+Domicilio Titular: Calle Falsa 123, Buenos Aires
+Condición IVA: Responsable Inscripto
+Importe Total: $15.250,00
+Importe Neto: $12.603,31
+Importe IVA: $2.646,69`;
+
 export function Demo() {
-  const [status, setStatus] = useState<ProcessingStatus>("idle");
+  const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -24,11 +73,11 @@ export function Demo() {
 
   const processFile = useCallback(async (file: File) => {
     setFile(file);
-    setStatus("uploading");
+    setStatus('uploading');
     setError(null);
     setResult(null);
 
-    if (file.type.startsWith("image/")) {
+    if (file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => setPreview(e.target?.result as string);
       reader.readAsDataURL(file);
@@ -37,33 +86,33 @@ export function Demo() {
     }
 
     try {
-      setStatus("processing");
+      setStatus('processing');
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/v1/process`, {
-        method: "POST",
+      const response = await fetch('/api/proxy/process', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Error processing file");
+        throw new Error('Error processing file');
       }
 
       const data = await response.json();
 
-      const jobResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/v1/jobs/${data.job_id}`);
+      const jobResponse = await fetch(`/api/proxy/jobs/${data.job_id}`);
       const jobData = await jobResponse.json();
 
       setResult({
-        rawText: jobData.full_text || "",
+        rawText: jobData.full_text || '',
         extractedData: jobData.extracted_data || {},
       });
-      setStatus("success");
+      setStatus('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error processing file");
-      setStatus("error");
+      setError(err instanceof Error ? err.message : 'Error processing file');
+      setStatus('error');
     }
   }, []);
 
@@ -98,7 +147,7 @@ export function Demo() {
   }, [result]);
 
   const resetDemo = useCallback(() => {
-    setStatus("idle");
+    setStatus('idle');
     setFile(null);
     setPreview(null);
     setResult(null);
@@ -106,12 +155,13 @@ export function Demo() {
   }, []);
 
   return (
-    <section id="demo" className="py-24 px-6 relative bg-gradient-to-b from-transparent via-blue-500/5 to-transparent">
+    <section
+      id="demo"
+      className="py-24 px-6 relative bg-gradient-to-b from-transparent via-blue-500/5 to-transparent"
+    >
       <div className="mx-auto max-w-7xl">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Demo Interactiva
-          </h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Demo Interactiva</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Sube una factura y ve cómo nuestra IA la procesa en tiempo real
           </p>
@@ -121,18 +171,14 @@ export function Demo() {
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle>Factura Original</CardTitle>
-              <CardDescription>
-                Arrastra o selecciona una imagen o PDF
-              </CardDescription>
+              <CardDescription>Arrastra o selecciona una imagen o PDF</CardDescription>
             </CardHeader>
             <CardContent>
               <div
                 className={cn(
-                  "relative border-2 border-dashed rounded-lg min-h-[400px] flex flex-col items-center justify-center p-8 transition-colors",
-                  dragActive
-                    ? "border-teal-500 bg-teal-500/10"
-                    : "border-border",
-                  status !== "idle" && "cursor-not-allowed opacity-50"
+                  'relative border-2 border-dashed rounded-lg min-h-[400px] flex flex-col items-center justify-center p-8 transition-colors',
+                  dragActive ? 'border-teal-500 bg-teal-500/10' : 'border-border',
+                  status !== 'idle' && 'cursor-not-allowed opacity-50'
                 )}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -160,7 +206,7 @@ export function Demo() {
                       <Image className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <p className="mt-4 text-sm text-muted-foreground">
-                      Arrastra tu factura aquí o{" "}
+                      Arrastra tu factura aquí o{' '}
                       <label className="text-primary cursor-pointer hover:underline">
                         súbela
                         <input
@@ -168,23 +214,21 @@ export function Demo() {
                           className="hidden"
                           accept="image/*,.pdf"
                           onChange={handleChange}
-                          disabled={status !== "idle"}
+                          disabled={status !== 'idle'}
                         />
                       </label>
                     </p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      PNG, JPG, PDF • Máx 10MB
-                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, PDF • Máx 10MB</p>
                   </div>
                 )}
 
-                {status === "uploading" && (
+                {status === 'uploading' && (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
                     <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
                   </div>
                 )}
 
-                {status === "processing" && (
+                {status === 'processing' && (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
                     <div className="text-center">
                       <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto" />
@@ -194,7 +238,7 @@ export function Demo() {
                 )}
               </div>
 
-              {status !== "idle" && (
+              {status !== 'idle' && (
                 <Button variant="outline" className="w-full mt-4" onClick={resetDemo}>
                   Nueva factura
                 </Button>
@@ -203,7 +247,7 @@ export function Demo() {
           </Card>
 
           <div className="space-y-6">
-            {status === "error" && (
+            {status === 'error' && (
               <Card className="border-red-500/50 bg-red-500/10">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
@@ -217,7 +261,7 @@ export function Demo() {
               </Card>
             )}
 
-            {status === "success" && result && (
+            {status === 'success' && result && (
               <>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -228,7 +272,7 @@ export function Demo() {
                   </CardHeader>
                   <CardContent>
                     <div className="max-h-[200px] overflow-y-auto rounded-lg bg-muted p-4 font-mono text-sm">
-                      {result.rawText || "No se pudo extraer texto"}
+                      {result.rawText || 'No se pudo extraer texto'}
                     </div>
                   </CardContent>
                 </Card>
@@ -242,12 +286,7 @@ export function Demo() {
                       </CardTitle>
                       <CardDescription>Datos extraídos por IA</CardDescription>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyToClipboard}
-                      className="gap-2"
-                    >
+                    <Button variant="outline" size="sm" onClick={copyToClipboard} className="gap-2">
                       {copied ? (
                         <>
                           <Check className="h-4 w-4" />
@@ -272,14 +311,12 @@ export function Demo() {
               </>
             )}
 
-            {status === "idle" && (
+            {status === 'idle' && (
               <Card className="border-dashed">
                 <CardContent className="py-16">
                   <div className="text-center">
                     <Upload className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                    <h3 className="mt-4 text-lg font-medium">
-                      Esperando archivo...
-                    </h3>
+                    <h3 className="mt-4 text-lg font-medium">Esperando archivo...</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Sube una factura para ver el procesamiento en acción
                     </p>
