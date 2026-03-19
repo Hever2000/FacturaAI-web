@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, Send, Check } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -35,79 +35,57 @@ export function FeedbackModal({
     setIsSubmitting(false);
   };
 
-  const renderValue = (value: unknown, depth = 0): React.ReactNode => {
-    if (depth > 2) return <span className="text-muted-foreground">...</span>;
-    if (Array.isArray(value)) {
-      return (
-        <div className="pl-4 border-l-2 border-border">
-          {value.map((item, index) => (
-            <div key={index} className="py-1">
-              {renderValue(item, depth + 1)}
-            </div>
-          ))}
-        </div>
-      );
+  const getDisplayValue = (key: string, originalValue: unknown): string => {
+    if (corrections[key] !== undefined) {
+      return corrections[key];
     }
-    if (typeof value === 'object' && value !== null) {
-      return (
-        <div className="pl-4 border-l-2 border-border">
-          {Object.entries(value).map(([k, v]) => (
-            <div key={k} className="py-1">
-              <span className="font-medium">{k}: </span>
-              {renderValue(v, depth + 1)}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return <span>{String(value)}</span>;
+    return String(originalValue ?? '');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl border bg-background shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl border bg-slate-950 shadow-2xl">
+        <div className="flex items-center justify-between p-6 border-b bg-slate-900">
           <div>
-            <h2 className="text-xl font-bold">Corregir Datos</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-xl font-bold text-white">Corregir Datos</h2>
+            <p className="text-sm text-slate-400">
               Edita los campos incorrectos para mejorar el modelo
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-white hover:text-slate-300"
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] bg-slate-950">
           <div className="space-y-4">
             {Object.entries(extractedData).map(([key, value]) => {
               if (key === 'items' && Array.isArray(value)) {
                 return (
-                  <div key={key} className="p-4 rounded-lg border bg-muted/50">
-                    <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  <div key={key} className="p-4 rounded-lg border border-slate-700 bg-slate-900">
+                    <label className="text-sm font-medium text-slate-300 uppercase tracking-wide">
                       {key}
                     </label>
                     <div className="mt-2 space-y-3">
                       {value.map((item: Record<string, unknown>, index: number) => (
-                        <div key={index} className="p-3 rounded bg-background">
+                        <div key={index} className="p-3 rounded bg-slate-800">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {Object.entries(item).map(([itemKey, itemValue]) => (
                               <div key={itemKey} className="flex flex-col gap-1">
-                                <label className="text-xs font-medium text-muted-foreground">
+                                <label className="text-xs font-medium text-slate-400">
                                   {itemKey}
                                 </label>
                                 <Input
-                                  value={
-                                    corrections[`${key}[${index}].${itemKey}`] ??
-                                    String(itemValue ?? '')
-                                  }
+                                  value={getDisplayValue(`${key}[${index}].${itemKey}`, itemValue)}
                                   onChange={(e) =>
                                     handleFieldChange(`${key}[${index}].${itemKey}`, e.target.value)
                                   }
-                                  placeholder={String(itemValue ?? '')}
-                                  className="h-8 text-sm"
+                                  className="h-9 text-sm bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
                                 />
                               </div>
                             ))}
@@ -122,35 +100,45 @@ export function FeedbackModal({
               if (typeof value !== 'object') {
                 return (
                   <div key={key} className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    <label className="text-sm font-medium text-slate-300 uppercase tracking-wide">
                       {key}
                     </label>
                     <Input
-                      value={corrections[key] ?? ''}
+                      value={getDisplayValue(key, value)}
                       onChange={(e) => handleFieldChange(key, e.target.value)}
-                      placeholder={String(value ?? '')}
+                      className="h-10 bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
                     />
                   </div>
                 );
               }
 
               return (
-                <div key={key} className="p-4 rounded-lg border bg-muted/50">
-                  <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                <div key={key} className="p-4 rounded-lg border border-slate-700 bg-slate-900">
+                  <label className="text-sm font-medium text-slate-300 uppercase tracking-wide">
                     {key}
                   </label>
-                  <div className="mt-2">{renderValue(value)}</div>
+                  <div className="mt-2 text-slate-400 text-sm font-mono">
+                    {JSON.stringify(value, null, 2)}
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t bg-muted/30">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex items-center justify-end gap-3 p-6 border-t bg-slate-900 border-slate-700">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-slate-600 text-slate-300 hover:bg-slate-800"
+          >
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="gap-2 bg-teal-600 hover:bg-teal-700"
+          >
             {isSubmitting ? (
               <>Enviando...</>
             ) : (
