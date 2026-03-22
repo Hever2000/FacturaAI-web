@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,10 +140,13 @@ export default function UploadPage() {
 
               {preview ? (
                 <div className="w-full">
-                  <img
+                  <Image
                     src={preview}
                     alt="Preview"
+                    width={600}
+                    height={300}
                     className="max-w-full max-h-[300px] mx-auto rounded-lg object-contain"
+                    unoptimized
                   />
                   <div className="mt-4 text-center text-sm text-slate-500">{file?.name}</div>
                 </div>

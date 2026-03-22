@@ -35,7 +35,12 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 
   // Security headers

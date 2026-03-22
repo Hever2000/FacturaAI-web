@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FeedbackModal } from '@/components/ui/feedback-modal';
-import { Upload, FileJson, Copy, Check, Loader2, Image, AlertCircle, Edit } from 'lucide-react';
+import {
+  Upload,
+  FileJson,
+  Copy,
+  Check,
+  Loader2,
+  AlertCircle,
+  Edit,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'success' | 'error';
@@ -181,10 +191,13 @@ export function Demo() {
               >
                 {preview ? (
                   <div className="relative w-full">
-                    <img
+                    <Image
                       src={preview}
                       alt="Preview"
+                      width={800}
+                      height={400}
                       className="max-w-full max-h-[400px] mx-auto rounded-lg object-contain"
+                      unoptimized
                     />
                     {file && (
                       <div className="mt-4 text-center text-sm text-muted-foreground">
@@ -195,7 +208,7 @@ export function Demo() {
                 ) : (
                   <div className="text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <Image className="h-8 w-8 text-muted-foreground" />
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <p className="mt-4 text-sm text-muted-foreground">
                       Arrastra tu factura aquí o{' '}
