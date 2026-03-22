@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Geist } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { QueryProvider } from '@/components/providers/query-provider';
-
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,10 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="es"
-      className={cn(inter.variable, jetbrainsMono.variable, 'font-sans', geist.variable)}
-    >
+    <html lang="es" className={cn(inter.variable, jetbrainsMono.variable, 'font-sans')}>
       <body className="min-h-screen antialiased font-sans">
         <QueryProvider>{children}</QueryProvider>
       </body>

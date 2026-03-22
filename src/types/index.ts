@@ -1,52 +1,18 @@
-export interface InvoiceData {
-  tipo: string;
-  puntoVenta: string;
-  numeroComprobante: string;
-  fecha: string;
-  cuitemisor: string;
-  nombreEmisor: string;
-  domicilioEmisor: string;
-  cuittitular: string;
-  nombreTitular: string;
-  domicilioTitular: string;
-  condicionIva: string;
-  importeTotal: number;
-  importeNeto: number;
-  importeIva: number;
-  importeTributos: number;
-  codigoBarras: string;
-  items: InvoiceItem[];
-}
+export * from './auth';
+export * from './jobs';
+export * from './api-keys';
+export * from './subscription';
 
-export interface InvoiceItem {
-  descripcion: string;
-  cantidad: number;
-  precioUnitario: number;
-  alicuotaIva: number;
-  importe: number;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: ApiError;
+export interface RateLimitStatus {
+  tier: string;
+  requests_this_minute: number;
+  limit_per_minute: number;
+  resets_in_seconds: number;
+  monthly_usage: number;
+  monthly_limit: number;
+  monthly_remaining: number;
 }
 
 export interface ApiError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-}
-
-export interface ProcessingResult {
-  invoice: InvoiceData;
-  confidence: number;
-  processingTime: number;
-  rawText?: string;
-}
-
-export interface UploadResponse {
-  id: string;
-  filename: string;
-  status: "pending" | "processing" | "completed" | "failed";
+  detail: string;
 }
