@@ -16,3 +16,9 @@ export interface RateLimitStatus {
 export interface ApiError {
   detail: string;
 }
+
+export interface ApiResponse<T = unknown> {
+  data?: T;
+  error?: string;
+  message?: string;
+}

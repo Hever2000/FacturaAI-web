@@ -1,16 +1,15 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { FileText, Github, Menu, X } from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { FileText, Github, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: "Cómo funciona", href: "#como-funciona" },
-  { name: "Demo", href: "#demo" },
-  { name: "Features", href: "#features" },
-  { name: "API", href: "#api" },
+  { name: 'Cómo funciona', href: '#como-funciona' },
+  { name: 'Demo', href: '#demo' },
+  { name: 'Features', href: '#features' },
+  { name: 'API', href: '#api' },
 ];
 
 export function Header() {
@@ -41,35 +40,29 @@ export function Header() {
         </div>
 
         <div className="hidden md:flex md:items-center md:gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="https://github.com" target="_blank">
-              <Github className="mr-2 h-4 w-4" />
-              GitHub
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="#demo">Probar Demo</Link>
-          </Button>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-transparent hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+          >
+            <Github className="mr-2 h-4 w-4" />
+            GitHub
+          </a>
+          <a
+            href="#demo"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+          >
+            Probar Demo
+          </a>
         </div>
 
-        <button
-          className="md:hidden"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
+        <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </nav>
 
-      <div
-        className={cn(
-          "md:hidden glass border-t",
-          mobileMenuOpen ? "block" : "hidden"
-        )}
-      >
+      <div className={cn('md:hidden glass border-t', mobileMenuOpen ? 'block' : 'hidden')}>
         <div className="space-y-2 px-6 py-4">
           {navigation.map((item) => (
             <Link
@@ -82,15 +75,21 @@ export function Header() {
             </Link>
           ))}
           <div className="flex gap-2 pt-2">
-            <Button variant="ghost" size="sm" className="flex-1" asChild>
-              <Link href="https://github.com" target="_blank">
-                <Github className="mr-2 h-4 w-4" />
-                GitHub
-              </Link>
-            </Button>
-            <Button size="sm" className="flex-1" asChild>
-              <Link href="#demo">Probar Demo</Link>
-            </Button>
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-transparent hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+            >
+              <Github className="mr-2 h-4 w-4" />
+              GitHub
+            </a>
+            <a
+              href="#demo"
+              className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+            >
+              Probar Demo
+            </a>
           </div>
         </div>
       </div>
