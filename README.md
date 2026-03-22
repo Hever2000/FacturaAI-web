@@ -1,23 +1,26 @@
 # FacturaAI
 
-> OCR + IA para procesamiento automático de facturas argentinas
+> SaaS para procesamiento automático de facturas argentinas con OCR + IA
 
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38b2ac?style=flat-square&logo=tailwind-css)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+![Security](https://img.shields.io/badge/Security-HTTPS%20%7C%20CSP%20%7C%20Headers-blue?style=flat-square)
 
 ## 🎯 Descripción
 
-FacturaAI es una aplicación web que utiliza OCR inteligente e IA para extraer automáticamente datos estructurados de facturas argentinas en formato AFIP. Procesa PDFs e imágenes en segundos, devolviendo JSON con toda la información relevante.
+FacturaAI es una aplicación SaaS que utiliza OCR inteligente e IA para extraer automáticamente datos estructurados de facturas argentinas en formato AFIP. Procesa PDFs e imágenes en segundos, devolviendo JSON con toda la información relevante.
 
 ## ✨ Características
 
+- 🔐 **Autenticación segura** - JWT con refresh token automático
 - 📄 **Procesamiento OCR** - Extrae texto de PDFs e imágenes
 - 🤖 **IA Inteligente** - Comprende el formato AFIP automáticamente
 - ⚡ **Ultra Rápido** - Respuesta en menos de 5 segundos
-- 🎯 **Alta Precisión** - 99.8% de exactitud en extracción
 - 📊 **JSON Estructurado** - Datos listos para integrar
+- 🔑 **API Keys** - Gestiona claves para integración
+- 💳 **Suscripciones** - Planes Free, Pro y Enterprise con Mercado Pago
 
 ## 🛠️ Stack
 
@@ -25,23 +28,38 @@ FacturaAI es una aplicación web que utiliza OCR inteligente e IA para extraer a
 - **Lenguaje:** TypeScript
 - **Estilos:** TailwindCSS
 - **Componentes:** shadcn/ui
-- **API Client:** Axios
-- **Linting:** ESLint + Prettier
+- **Estado:** React Query + Zustand
+- **API Client:** Axios con interceptors
+- **Validación:** Zod
+
+## 🔒 Seguridad
+
+- Headers de seguridad (HSTS, X-Frame-Options, CSP, etc.)
+- Validación de inputs con Zod
+- Sanitización de archivos subidos
+- Rate limit handling
+- Tokens JWT con refresh automático
+- Middleware para rutas protegidas
 
 ## 📁 Estructura del Proyecto
 
 ```
 src/
-├── app/              # App Router (páginas y layouts)
+├── app/
+│   ├── (auth)/           # Login, Register
+│   ├── (dashboard)/       # Dashboard pages
+│   └── api/              # API routes
 ├── components/
-│   ├── ui/          # Componentes base (Button, Card, Input)
-│   └── sections/     # Secciones de landing
-├── features/        # Features específicas por módulo
-├── hooks/           # Custom hooks reutilizables
-├── lib/             # Utilidades y configuración
-├── services/        # Capa de comunicación con API
-├── types/           # TypeScript interfaces y tipos
-└── config/          # Constantes y configuración global
+│   ├── ui/              # Componentes shadcn/ui
+│   └── providers/       # React Query provider
+├── lib/
+│   ├── api/             # API layer con interceptors
+│   ├── constants.ts      # Constantes de la app
+│   ├── security.ts       # Validación y sanitización
+│   └── utils.ts         # Utilidades
+├── stores/              # Zustand stores
+├── types/               # TypeScript interfaces
+└── middleware.ts       # Auth middleware
 ```
 
 ## 🚀 Inicio Rápido
@@ -50,8 +68,9 @@ src/
 
 - Node.js 18+
 - npm o yarn
+- Backend API corriendo (ver [FacturaAI Backend](https://github.com/Hever2000/FacturaAI))
 
-### Instalación
+### Instalación Local
 
 ```bash
 # Clonar el repositorio
@@ -73,58 +92,110 @@ La aplicación estará disponible en [http://localhost:3000](http://localhost:30
 ### Variables de Entorno
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Producción
+NEXT_PUBLIC_API_BASE_URL=https://tu-backend.onrender.com/v1
+NEXT_PUBLIC_APP_URL=https://tu-dominio.vercel.app
+
+# Desarrollo
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/v1
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ## 📝 Scripts Disponibles
 
-| Script | Descripción |
-|--------|-------------|
-| `npm run dev` | Inicia el servidor de desarrollo |
-| `npm run build` | Construye la aplicación para producción |
-| `npm run start` | Inicia el servidor de producción |
-| `npm run lint` | Ejecuta ESLint |
+| Script             | Descripción                             |
+| ------------------ | --------------------------------------- |
+| `npm run dev`      | Inicia el servidor de desarrollo        |
+| `npm run build`    | Construye la aplicación para producción |
+| `npm run start`    | Inicia el servidor de producción        |
+| `npm run lint`     | Ejecuta ESLint                          |
 | `npm run lint:fix` | Corrige errores de lint automáticamente |
 
-## 🔌 API
+## 🌐 Deploy en Vercel
 
-El proyecto está preparado para conectarse a una API backend. Ver [services/api.ts](src/services/api.ts) para la configuración.
+### 1. Conectar Repository
 
-### Endpoints esperados:
+1. Ve a [vercel.com](https://vercel.com)
+2. Importa el repositorio de GitHub
+3. Selecciona el branch `main`
 
-- `POST /api/invoice/process` - Procesar una factura
-- `GET /api/invoice/status/:id` - Obtener estado del procesamiento
+### 2. Configurar Variables de Entorno
+
+En Vercel Dashboard → Settings → Environment Variables:
+
+| Name                       | Value                                | Environments                     |
+| -------------------------- | ------------------------------------ | -------------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL` | `https://tu-backend.onrender.com/v1` | Production, Preview, Development |
+| `NEXT_PUBLIC_APP_URL`      | `https://factura-ai-web.vercel.app`  | Production                       |
+
+### 3. Deploy
+
+```bash
+# Deploy automático (cada push a main)
+# O manual:
+vercel --prod
+```
+
+## 🔌 Endpoints de API
+
+### Autenticación
+
+| Método | Endpoint            | Descripción         |
+| ------ | ------------------- | ------------------- |
+| POST   | `/v1/auth/register` | Registro de usuario |
+| POST   | `/v1/auth/login`    | Inicio de sesión    |
+| POST   | `/v1/auth/refresh`  | Refrescar token     |
+| GET    | `/v1/auth/me`       | Datos del usuario   |
+
+### Procesamiento
+
+| Método | Endpoint                 | Descripción       |
+| ------ | ------------------------ | ----------------- |
+| POST   | `/v1/jobs/process`       | Procesar factura  |
+| GET    | `/v1/jobs`               | Listar jobs       |
+| GET    | `/v1/jobs/{id}`          | Detalle de job    |
+| POST   | `/v1/jobs/{id}/feedback` | Enviar corrección |
+
+### API Keys
+
+| Método | Endpoint           | Descripción      |
+| ------ | ------------------ | ---------------- |
+| POST   | `/v1/apikeys`      | Crear API key    |
+| GET    | `/v1/apikeys`      | Listar API keys  |
+| DELETE | `/v1/apikeys/{id}` | Eliminar API key |
+
+### Suscripciones
+
+| Método | Endpoint                     | Descripción          |
+| ------ | ---------------------------- | -------------------- |
+| GET    | `/v1/subscriptions/plans`    | Listar planes        |
+| POST   | `/v1/subscriptions/checkout` | Iniciar checkout MP  |
+| DELETE | `/v1/subscriptions`          | Cancelar suscripción |
 
 ## 🎨 Sistema de Diseño
 
-El proyecto utiliza un sistema de diseño basado en:
-
 - **Colores:** Tema oscuro con acentos teal/verde
-- **Tipografía:** Inter para texto, JetBrains Mono para código
+- **Tipografía:** Inter para texto
 - **Componentes:** shadcn/ui para UI base
 
-## 📦 Deploy
-
-### Vercel (Recomendado)
+## 📦 Docker (Opcional)
 
 ```bash
-npm i -g vercel
-vercel
-```
-
-### Docker
-
-```bash
+# Build
 docker build -t facturaai-web .
-docker run -p 3000:3000 facturaai-web
+
+# Run
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_BASE_URL=https://tu-backend.com/v1 \
+  -e NEXT_PUBLIC_APP_URL=http://localhost:3000 \
+  facturaai-web
 ```
 
 ## 🤝 Contribuir
 
 1. Fork el repositorio
 2. Crea una rama (`git checkout -b feature/nueva-funcion`)
-3. Commit tus cambios (`git commit -m 'Agregar nueva función'`)
+3. Commit tus cambios (`git commit -m 'feat: nueva funcion'`)
 4. Push a la rama (`git push origin feature/nueva-funcion`)
 5. Abre un Pull Request
 
