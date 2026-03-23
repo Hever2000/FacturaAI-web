@@ -1,10 +1,11 @@
-import { Header } from "@/components/sections/header";
-import { Hero } from "@/components/sections/hero";
-import { HowItWorks } from "@/components/sections/how-it-works";
-import { Demo } from "@/components/sections/demo";
-import { Features } from "@/components/sections/features";
-import { APISection } from "@/components/sections/api-section";
-import { Footer } from "@/components/sections/footer";
+import { Header } from '@/components/sections/header';
+import { Hero } from '@/components/sections/hero';
+import { HowItWorks } from '@/components/sections/how-it-works';
+import { Demo } from '@/components/sections/demo';
+import { Features } from '@/components/sections/features';
+import { APISection } from '@/components/sections/api-section';
+import { PricingSection } from '@/components/sections/pricing';
+import { Footer } from '@/components/sections/footer';
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
       <Demo />
       <Features />
       <APISection />
+      <PricingSection />
       <Footer />
     </main>
   );

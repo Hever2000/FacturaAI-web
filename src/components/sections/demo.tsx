@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FeedbackModal } from '@/components/ui/feedback-modal';
@@ -35,6 +36,7 @@ interface FeedbackData {
 }
 
 export function Demo() {
+  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [dragActive, setDragActive] = useState(false);
@@ -174,27 +176,64 @@ export function Demo() {
         </div>
 
         {!isAuthenticated ? (
-          <Card className="max-w-md mx-auto border-dashed">
-            <CardContent className="pt-8 pb-8">
-              <div className="text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-6">
-                  <Lock className="h-8 w-8 text-muted-foreground" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle>Factura Original</CardTitle>
+                <CardDescription>Arrastra o selecciona una imagen o PDF</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className={cn(
+                    'relative border-2 border-dashed rounded-lg min-h-[400px] flex flex-col items-center justify-center p-8 transition-colors',
+                    dragActive ? 'border-teal-500 bg-teal-500/10' : 'border-border'
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={() => setDragActive(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDragActive(false);
+                    router.push('/login');
+                  }}
+                >
+                  <div className="text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      Arrastra tu factura aquí o{' '}
+                      <button
+                        type="button"
+                        className="text-primary cursor-pointer hover:underline"
+                        onClick={() => router.push('/login')}
+                      >
+                        súbela
+                      </button>
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, PDF • Máx 10MB</p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-medium mb-2">Demo requiere autenticación</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Para probar la demo, necesitas crear una cuenta. Es gratis y rápido.
-                </p>
-                <div className="flex gap-3 justify-center">
-                  <Link href="/login">
-                    <Button variant="outline">Iniciar Sesión</Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button>Crear Cuenta</Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card className="border-dashed">
+                <CardContent className="py-16">
+                  <div className="text-center">
+                    <Upload className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                    <h3 className="mt-4 text-lg font-medium">Esperando archivo...</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Sube una factura para ver el procesamiento en acción
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="border-dashed">
