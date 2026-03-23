@@ -2,9 +2,11 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FeedbackModal } from '@/components/ui/feedback-modal';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   Upload,
   FileJson,
@@ -14,6 +16,7 @@ import {
   AlertCircle,
   Edit,
   Image as ImageIcon,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +35,7 @@ interface FeedbackData {
 }
 
 export function Demo() {
+  const { isAuthenticated } = useAuthStore();
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -169,191 +173,215 @@ export function Demo() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="border-dashed">
-            <CardHeader>
-              <CardTitle>Factura Original</CardTitle>
-              <CardDescription>Arrastra o selecciona una imagen o PDF</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={cn(
-                  'relative border-2 border-dashed rounded-lg min-h-[400px] flex flex-col items-center justify-center p-8 transition-colors',
-                  dragActive ? 'border-teal-500 bg-teal-500/10' : 'border-border',
-                  status !== 'idle' && 'cursor-not-allowed opacity-50'
-                )}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={handleDrop}
-              >
-                {preview ? (
-                  <div className="relative w-full">
-                    <Image
-                      src={preview}
-                      alt="Preview"
-                      width={800}
-                      height={400}
-                      className="max-w-full max-h-[400px] mx-auto rounded-lg object-contain"
-                      unoptimized
-                    />
-                    {file && (
-                      <div className="mt-4 text-center text-sm text-muted-foreground">
-                        {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      Arrastra tu factura aquí o{' '}
-                      <label className="text-primary cursor-pointer hover:underline">
-                        súbela
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*,.pdf"
-                          onChange={handleChange}
-                          disabled={status !== 'idle'}
-                        />
-                      </label>
-                    </p>
-                    <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, PDF • Máx 10MB</p>
-                  </div>
-                )}
-
-                {status === 'uploading' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-                    <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
-                  </div>
-                )}
-
-                {status === 'processing' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-                    <div className="text-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto" />
-                      <p className="mt-2 text-sm text-muted-foreground">Procesando con IA...</p>
-                    </div>
-                  </div>
-                )}
+        {!isAuthenticated ? (
+          <Card className="max-w-md mx-auto border-dashed">
+            <CardContent className="pt-8 pb-8">
+              <div className="text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-6">
+                  <Lock className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">Demo requiere autenticación</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Para probar la demo, necesitas crear una cuenta. Es gratis y rápido.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Link href="/login">
+                    <Button variant="outline">Iniciar Sesión</Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button>Crear Cuenta</Button>
+                  </Link>
+                </div>
               </div>
-
-              {status !== 'idle' && (
-                <Button variant="outline" className="w-full mt-4" onClick={resetDemo}>
-                  Nueva factura
-                </Button>
-              )}
             </CardContent>
           </Card>
-
-          <div className="space-y-6">
-            {status === 'error' && (
-              <Card className="border-red-500/50 bg-red-500/10">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-red-400">Error en el procesamiento</h4>
-                      <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle>Factura Original</CardTitle>
+                <CardDescription>Arrastra o selecciona una imagen o PDF</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className={cn(
+                    'relative border-2 border-dashed rounded-lg min-h-[400px] flex flex-col items-center justify-center p-8 transition-colors',
+                    dragActive ? 'border-teal-500 bg-teal-500/10' : 'border-border',
+                    status !== 'idle' && 'cursor-not-allowed opacity-50'
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={() => setDragActive(false)}
+                  onDrop={handleDrop}
+                >
+                  {preview ? (
+                    <div className="relative w-full">
+                      <Image
+                        src={preview}
+                        alt="Preview"
+                        width={800}
+                        height={400}
+                        className="max-w-full max-h-[400px] mx-auto rounded-lg object-contain"
+                        unoptimized
+                      />
+                      {file && (
+                        <div className="mt-4 text-center text-sm text-muted-foreground">
+                          {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {status === 'success' && result && (
-              <>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Texto Plano</CardTitle>
-                      <CardDescription>Texto extraído directamente de la factura</CardDescription>
+                  ) : (
+                    <div className="text-center">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="mt-4 text-sm text-muted-foreground">
+                        Arrastra tu factura aquí o{' '}
+                        <label className="text-primary cursor-pointer hover:underline">
+                          súbela
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*,.pdf"
+                            onChange={handleChange}
+                            disabled={status !== 'idle'}
+                          />
+                        </label>
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">PNG, JPG, PDF • Máx 10MB</p>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="max-h-[200px] overflow-y-auto rounded-lg bg-muted p-4 font-mono text-sm whitespace-pre-wrap">
-                      {result.rawText || 'No se pudo extraer texto'}
+                  )}
+
+                  {status === 'uploading' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                      <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+                    </div>
+                  )}
+
+                  {status === 'processing' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                      <div className="text-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-teal-500 mx-auto" />
+                        <p className="mt-2 text-sm text-muted-foreground">Procesando con IA...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {status !== 'idle' && (
+                  <Button variant="outline" className="w-full mt-4" onClick={resetDemo}>
+                    Nueva factura
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              {status === 'error' && (
+                <Card className="border-red-500/50 bg-red-500/10">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-red-400">Error en el procesamiento</h4>
+                        <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
+              )}
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileJson className="h-5 w-5 text-teal-500" />
-                        Datos Estructurados
-                      </CardTitle>
-                      <CardDescription>Datos extraídos por IA</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={copyToClipboard}
-                        className="gap-2"
-                      >
-                        {copied ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            Copiado
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-4 w-4" />
-                            Copiar
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setFeedbackData({
-                            jobId: result.jobId,
-                            extractedData: result.extractedData,
-                            rawText: result.rawText,
-                          });
-                          setShowFeedbackModal(true);
-                        }}
-                        className="gap-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Corregir
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="max-h-[400px] overflow-y-auto rounded-lg bg-muted p-4">
-                      <pre className="text-xs font-mono whitespace-pre-wrap">
-                        {JSON.stringify(result.extractedData, null, 2)}
-                      </pre>
+              {status === 'success' && result && (
+                <>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Texto Plano</CardTitle>
+                        <CardDescription>Texto extraído directamente de la factura</CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="max-h-[200px] overflow-y-auto rounded-lg bg-muted p-4 font-mono text-sm whitespace-pre-wrap">
+                        {result.rawText || 'No se pudo extraer texto'}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <FileJson className="h-5 w-5 text-teal-500" />
+                          Datos Estructurados
+                        </CardTitle>
+                        <CardDescription>Datos extraídos por IA</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={copyToClipboard}
+                          className="gap-2"
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Copiado
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4" />
+                              Copiar
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setFeedbackData({
+                              jobId: result.jobId,
+                              extractedData: result.extractedData,
+                              rawText: result.rawText,
+                            });
+                            setShowFeedbackModal(true);
+                          }}
+                          className="gap-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Corregir
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="max-h-[400px] overflow-y-auto rounded-lg bg-muted p-4">
+                        <pre className="text-xs font-mono whitespace-pre-wrap">
+                          {JSON.stringify(result.extractedData, null, 2)}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+
+              {status === 'idle' && (
+                <Card className="border-dashed">
+                  <CardContent className="py-16">
+                    <div className="text-center">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                      <h3 className="mt-4 text-lg font-medium">Esperando archivo...</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Sube una factura para ver el procesamiento en acción
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
-              </>
-            )}
-
-            {status === 'idle' && (
-              <Card className="border-dashed">
-                <CardContent className="py-16">
-                  <div className="text-center">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                    <h3 className="mt-4 text-lg font-medium">Esperando archivo...</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Sube una factura para ver el procesamiento en acción
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {showFeedbackModal && feedbackData && (

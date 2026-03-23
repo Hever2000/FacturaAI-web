@@ -55,6 +55,12 @@ export function Header() {
           >
             Probar Demo
           </a>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+          >
+            Login
+          </Link>
         </div>
 
         <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -90,6 +96,12 @@ export function Header() {
             >
               Probar Demo
             </a>
+            <Link
+              href="/login"
+              className="flex-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+            >
+              Login
+            </Link>
           </div>
         </div>
       </div>

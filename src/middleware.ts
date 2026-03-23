@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Paths that don't require authentication
-const publicPaths = ['/login', '/register', '/api/proxy/process'];
+const publicPaths = ['/', '/login', '/register', '/api/proxy/process'];
 
 // Check if user is authenticated
 function isAuthenticated(request: NextRequest): boolean {
