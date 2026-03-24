@@ -36,19 +36,19 @@ export default function SubscriptionPage() {
     setLoading(true);
     try {
       const [subRes, plansRes] = await Promise.all([
-        subscriptionApi.current().catch(() => ({
-          data: {
-            tier: 'free',
-            status: 'active',
-            monthly_limit: 100,
-            monthly_used: 0,
-            monthly_remaining: 100,
-          } as Subscription,
-        })),
+        subscriptionApi.current().catch(() => null),
         subscriptionApi.plans(),
       ]);
-      setSubscription(subRes.data);
-      setPlans(plansRes.data?.plans || []);
+      setSubscription(
+        subRes ?? {
+          tier: 'free' as const,
+          status: 'active',
+          monthly_limit: 100,
+          monthly_used: 0,
+          monthly_remaining: 100,
+        }
+      );
+      setPlans(plansRes?.plans || []);
     } catch (error) {
       console.error('Error fetching subscription:', error);
     } finally {
@@ -60,7 +60,7 @@ export default function SubscriptionPage() {
     setUpgrading(tier);
     try {
       const response = await subscriptionApi.checkout(tier);
-      const url = response.data.sandbox_init_point || response.data.init_point;
+      const url = response.sandbox_init_point || response.init_point;
       window.open(url, '_blank');
       toast.success('Redirigiendo a Mercado Pago...');
     } catch (error) {

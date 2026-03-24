@@ -55,3 +55,17 @@ export interface ProcessResponse {
   job_id: string;
   status: string;
 }
+
+export interface JobCreateResponse {
+  job_id: string;
+}
+
+export interface FeedbackRequest {
+  extracted_data: Record<string, unknown>;
+  corrections: Record<string, unknown>;
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  message: string;
+}

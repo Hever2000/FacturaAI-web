@@ -32,11 +32,11 @@ export default function JobsPage() {
       try {
         const response = await jobsApi.list({
           status: statusFilter || undefined,
-          page,
-          page_size: 10,
+          limit: 10,
+          offset: (page - 1) * 10,
         });
-        setJobs(response.data.jobs);
-        setTotalPages(response.data.pages);
+        setJobs(response.jobs);
+        setTotalPages(Math.ceil(response.total / 10));
       } catch (error) {
         console.error('Error fetching jobs:', error);
       } finally {

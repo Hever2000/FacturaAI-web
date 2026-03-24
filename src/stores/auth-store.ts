@@ -29,14 +29,14 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authApi.login({ email, password });
-          const { access_token, refresh_token } = response.data;
+          const { access_token, refresh_token } = response;
 
           localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token);
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token);
 
           const userResponse = await authApi.me();
-          set({ user: userResponse.data, isAuthenticated: true, isLoading: false });
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userResponse.data));
+          set({ user: userResponse, isAuthenticated: true, isLoading: false });
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userResponse));
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -47,14 +47,14 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authApi.register({ email, password, full_name: fullName });
-          const { access_token, refresh_token } = response.data;
+          const { access_token, refresh_token } = response;
 
           localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token);
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token);
 
           const userResponse = await authApi.me();
-          set({ user: userResponse.data, isAuthenticated: true, isLoading: false });
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userResponse.data));
+          set({ user: userResponse, isAuthenticated: true, isLoading: false });
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userResponse));
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -73,8 +73,7 @@ export const useAuthStore = create<AuthState>()(
         if (!token) return;
 
         try {
-          const response = await authApi.me();
-          const user = response.data;
+          const user = await authApi.me();
           set({ user, isAuthenticated: true });
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
         } catch {

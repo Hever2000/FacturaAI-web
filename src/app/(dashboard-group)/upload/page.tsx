@@ -52,14 +52,13 @@ export default function UploadPage() {
     try {
       // Upload file
       const uploadResponse = await jobsApi.process(selectedFile);
-      const { job_id } = uploadResponse.data;
+      const { job_id } = uploadResponse;
 
       setStatus('processing');
 
       // Poll for result
       const pollResult = async () => {
-        const jobResponse = await jobsApi.get(job_id);
-        const job = jobResponse.data;
+        const job = await jobsApi.get(job_id);
 
         if (job.status === 'processing') {
           setTimeout(pollResult, 2000);

@@ -24,11 +24,11 @@ export default function LoginPage() {
 
     try {
       const response = await authApi.login({ email, password });
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.refresh_token);
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.access_token);
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refresh_token);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Email o contraseña incorrectos');
+      setError(err.message || 'Email o contraseña incorrectos');
     } finally {
       setLoading(false);
     }

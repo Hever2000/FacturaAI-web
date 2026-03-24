@@ -1,17 +1,17 @@
-import client from './client';
+import apiClient from './client';
 import type { ApiKey, CreateKeyRequest, CreateKeyResponse } from '@/types/api-keys';
 
 export const keysApi = {
-  list: () => client.get<{ api_keys: ApiKey[]; total: number }>('/apikeys'),
+  list: () => apiClient.get<{ api_keys: ApiKey[]; total: number }>('/apikeys'),
 
-  get: (id: string) => client.get<ApiKey>(`/apikeys/${id}`),
+  get: (id: string) => apiClient.get<ApiKey>(`/apikeys/${id}`),
 
-  create: (data: CreateKeyRequest) => client.post<CreateKeyResponse>('/apikeys', data),
+  create: (data: CreateKeyRequest) => apiClient.post<CreateKeyResponse>('/apikeys', data),
 
   update: (id: string, data: Partial<CreateKeyRequest>) =>
-    client.patch<ApiKey>(`/apikeys/${id}`, data),
+    apiClient.patch<ApiKey>(`/apikeys/${id}`, data),
 
-  rotate: (id: string) => client.post<CreateKeyResponse>(`/apikeys/${id}/rotate`),
+  rotate: (id: string) => apiClient.post<CreateKeyResponse>(`/apikeys/${id}/rotate`),
 
-  delete: (id: string) => client.delete(`/apikeys/${id}`),
+  delete: (id: string) => apiClient.delete(`/apikeys/${id}`),
 };

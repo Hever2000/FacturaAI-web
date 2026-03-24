@@ -21,8 +21,10 @@ FacturaAI es una aplicación SaaS que utiliza OCR inteligente e IA para extraer 
 - 📊 **JSON Estructurado** - Datos listos para integrar
 - 🔑 **API Keys** - Gestiona claves para integración
 - 💳 **Suscripciones** - Planes Free, Pro y Enterprise con Mercado Pago
-- 🎨 **Landing Page** - Página pública con demo interactiva (requiere auth)
+- 🎨 **Landing Page** - Página pública con demo interactiva
 - 📈 **Dashboard** - Panel de usuario con estadísticas y gestión
+- 🚀 **Async Processing** - UI de procesamiento con polling
+- 🔄 **Auto-refresh** - Renovación automática de tokens
 
 ## 🛠️ Stack
 

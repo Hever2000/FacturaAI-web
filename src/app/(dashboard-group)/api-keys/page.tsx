@@ -34,7 +34,7 @@ export default function ApiKeysPage() {
     setLoading(true);
     try {
       const response = await keysApi.list();
-      setKeys(response.data.api_keys);
+      setKeys(response.api_keys);
     } catch (error) {
       console.error('Error fetching keys:', error);
     } finally {
@@ -47,7 +47,7 @@ export default function ApiKeysPage() {
     setCreating(true);
     try {
       const response = await keysApi.create({ name: newKeyName });
-      setNewKey(response.data.key);
+      setNewKey(response.key);
       toast.success('API Key creada exitosamente');
       fetchKeys();
     } catch (error) {

@@ -1,32 +1,27 @@
-import client from './client';
-import type { JobsResponse, JobDetail, ProcessResponse } from '@/types/jobs';
+import apiClient from './client';
+import type {
+  Job,
+  JobCreateResponse,
+  JobsResponse,
+  FeedbackRequest,
+  FeedbackResponse,
+} from '@/types/jobs';
 
 export const jobsApi = {
-  list: (params?: { status?: string; page?: number; page_size?: number }) =>
-    client.get<JobsResponse>('/jobs', { params }),
+  process: (file: File, onProgress?: (progress: number) => void) =>
+    apiClient.uploadFile<JobCreateResponse>('/jobs/process', file, onProgress),
 
-  get: (id: string) => client.get<JobDetail>(`/jobs/${id}`),
+  get: (id: string) => apiClient.get<Job>(`/jobs/${id}`),
 
-  process: (file: File, onProgress?: (progress: number) => void) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return client.post<ProcessResponse>('/jobs/process', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      onUploadProgress: (e) => {
-        if (onProgress && e.total) {
-          onProgress(Math.round((e.loaded * 100) / e.total));
-        }
-      },
-    });
+  list: (params?: { limit?: number; offset?: number; status?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.offset) query.set('offset', params.offset.toString());
+    if (params?.status) query.set('status', params.status);
+    const queryString = query.toString();
+    return apiClient.get<JobsResponse>(`/jobs${queryString ? `?${queryString}` : ''}`);
   },
 
-  export: (id: string, format: 'json' | 'txt') =>
-    client.get(`/jobs/${id}/export`, {
-      params: { format },
-      responseType: format === 'txt' ? 'text' : 'json',
-    }),
-
-  feedback: (jobId: string, corrections: Record<string, unknown>) =>
-    client.post(`/jobs/${jobId}/feedback`, corrections),
+  feedback: (jobId: string, data: FeedbackRequest) =>
+    apiClient.post<FeedbackResponse>(`/jobs/${jobId}/feedback`, data),
 };

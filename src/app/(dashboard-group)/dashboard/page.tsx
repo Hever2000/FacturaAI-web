@@ -32,8 +32,7 @@ export default function DashboardPage() {
 
   const loadStats = async () => {
     try {
-      const response = await authApi.me();
-      const userData = response.data;
+      const userData = await authApi.me();
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       setUser(userData);
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { FeedbackModal } from '@/components/ui/feedback-modal';
 import { useAuthStore } from '@/stores/auth-store';
+import { jobsApi } from '@/lib/api/jobs';
 import {
   Upload,
   FileJson,
@@ -17,7 +18,6 @@ import {
   AlertCircle,
   Edit,
   Image as ImageIcon,
-  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +47,7 @@ export function Demo() {
   const [copied, setCopied] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const processFile = useCallback(async (file: File) => {
     setFile(file);
@@ -65,33 +66,43 @@ export function Demo() {
     try {
       setStatus('processing');
 
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/proxy/process', {
-        method: 'POST',
-        body: formData,
+      const response = await jobsApi.process(file, (progress) => {
+        setUploadProgress(progress);
       });
 
-      if (!response.ok) {
-        throw new Error('Error processing file');
-      }
-
-      const data = await response.json();
-
-      const jobResponse = await fetch(`/api/proxy/jobs/${data.job_id}`);
-      const jobData = await jobResponse.json();
-
-      const plainText = jobData.plain_text || jobData.full_text || jobData.raw_text || '';
-
-      setResult({
-        jobId: data.job_id,
-        rawText: plainText,
-        extractedData: jobData.extracted_data || {},
-      });
-      setStatus('success');
+      await pollJobStatus(response.job_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error processing file');
+      setStatus('error');
+    }
+  }, []);
+
+  const pollJobStatus = useCallback(async (jobId: string, attempts = 0) => {
+    if (attempts >= 30) {
+      setError('Tiempo de procesamiento agotado. Intenta de nuevo.');
+      setStatus('error');
+      return;
+    }
+
+    try {
+      const job = await jobsApi.get(jobId);
+
+      if (job.status === 'completed') {
+        setResult({
+          jobId: job.id,
+          rawText: (job as any).plain_text || (job as any).full_text || '',
+          extractedData: (job as any).extracted_data || {},
+        });
+        setStatus('success');
+      } else if (job.status === 'failed') {
+        setError('Error al procesar la factura');
+        setStatus('error');
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await pollJobStatus(jobId, attempts + 1);
+      }
+    } catch (err) {
+      setError('Error al verificar estado');
       setStatus('error');
     }
   }, []);
@@ -101,19 +112,10 @@ export function Demo() {
       if (!feedbackData) return;
 
       try {
-        const response = await fetch('/api/proxy/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            job_id: feedbackData.jobId,
-            extracted_data: feedbackData.extractedData,
-            corrections,
-          }),
+        await jobsApi.feedback(feedbackData.jobId, {
+          extracted_data: feedbackData.extractedData,
+          corrections,
         });
-
-        if (!response.ok) {
-          throw new Error('Error sending feedback');
-        }
 
         setShowFeedbackModal(false);
         alert('¡Gracias! Tu corrección ha sido enviada para mejorar el modelo.');

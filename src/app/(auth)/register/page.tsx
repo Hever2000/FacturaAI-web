@@ -32,11 +32,11 @@ export default function RegisterPage() {
 
     try {
       const response = await authApi.register({ email, password, full_name: fullName });
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.refresh_token);
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.access_token);
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refresh_token);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Error al registrarse');
+      setError(err.message || 'Error al registrarse');
     } finally {
       setLoading(false);
     }

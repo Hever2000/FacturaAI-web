@@ -1,98 +1,194 @@
-import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '@/lib/constants';
 
-const client = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Get token from localStorage or cookies
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  // Try localStorage first (for backward compatibility)
-  const localToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  if (localToken) return localToken;
-
-  // Try cookies
-  const cookies = document.cookie.split(';');
-  const tokenCookie = cookies.find((c) => c.trim().startsWith(`${STORAGE_KEYS.ACCESS_TOKEN}=`));
-  return tokenCookie ? tokenCookie.split('=')[1] : null;
+interface ApiClientOptions extends RequestInit {
+  timeout?: number;
 }
 
-client.interceptors.request.use(
-  (config) => {
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+interface ApiError {
+  error?: {
+    code: string;
+    message: string;
+  };
+  detail?: string;
+}
 
-    // Add request ID for tracing
-    config.headers['X-Request-ID'] = crypto.randomUUID();
+class ApiClient {
+  private baseUrl: string;
+  private timeout: number;
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-client.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Handle 401 Unauthorized
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        // Use separate axios instance to avoid interceptor loop
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
-
-        const { access_token, refresh_token } = response.data;
-
-        // Store tokens securely
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token);
-
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
-        return client(originalRequest);
-      } catch (refreshError) {
-        // Clear all auth data
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER);
-
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login?expired=true';
-        }
-
-        return Promise.reject(refreshError);
-      }
-    }
-
-    // Handle rate limit (429)
-    if (error.response?.status === 429) {
-      const retryAfter = error.response?.headers?.['retry-after'];
-      throw new Error(`rate_limited:${retryAfter || '60'}`);
-    }
-
-    // Handle server errors (5xx)
-    if (error.response?.status >= 500) {
-      throw new Error('error_server');
-    }
-
-    return Promise.reject(error);
+  constructor(baseUrl: string, timeout = 30000) {
+    this.baseUrl = baseUrl;
+    this.timeout = timeout;
   }
-);
 
-export default client;
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  }
+
+  private async request<T>(endpoint: string, options: ApiClientOptions = {}): Promise<T> {
+    const { timeout = this.timeout, ...fetchOptions } = options;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    const token = this.getToken();
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      'X-Request-ID': crypto.randomUUID(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...fetchOptions.headers,
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData: ApiError = await response.json().catch(() => ({}));
+
+        if (response.status === 401) {
+          const refreshed = await this.handleUnauthorized();
+          if (refreshed) {
+            return this.request<T>(endpoint, options);
+          }
+          throw new Error('AUTH_EXPIRED');
+        }
+
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('retry-after') || '60';
+          throw new Error(`RATE_LIMITED:${retryAfter}`);
+        }
+
+        if (response.status >= 500) {
+          throw new Error('SERVER_ERROR');
+        }
+
+        throw new Error(errorData.error?.message || errorData.detail || `HTTP_${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('TIMEOUT');
+        }
+        throw error;
+      }
+
+      throw new Error('UNKNOWN_ERROR');
+    }
+  }
+
+  private async handleUnauthorized(): Promise<boolean> {
+    try {
+      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      if (!refreshToken) return false;
+
+      const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        this.clearAuth();
+        return false;
+      }
+
+      const { access_token, refresh_token } = await response.json();
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token);
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token);
+      return true;
+    } catch {
+      this.clearAuth();
+      return false;
+    }
+  }
+
+  private clearAuth(): void {
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login?expired=true';
+    }
+  }
+
+  get<T>(endpoint: string, options?: ApiClientOptions): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  }
+
+  post<T>(endpoint: string, data?: unknown, options?: ApiClientOptions): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  patch<T>(endpoint: string, data?: unknown, options?: ApiClientOptions): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  delete<T>(endpoint: string, options?: ApiClientOptions): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  }
+
+  async uploadFile<T>(
+    endpoint: string,
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = this.getToken();
+
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress((e.loaded / e.total) * 100);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch {
+            resolve(xhr.responseText as T);
+          }
+        } else {
+          reject(new Error(`UPLOAD_FAILED:${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener('error', () => reject(new Error('UPLOAD_FAILED')));
+      xhr.addEventListener('timeout', () => reject(new Error('UPLOAD_TIMEOUT')));
+
+      xhr.open('POST', `${this.baseUrl}${endpoint}`);
+      xhr.send(formData);
+    });
+  }
+}
+
+export const apiClient = new ApiClient(API_BASE_URL);
+export default apiClient;
