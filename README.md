@@ -154,7 +154,6 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - `/` - Landing page completa (visible para todos)
 - `/login` - Página de login
 - `/register` - Página de registro
-- `/api/proxy/process` - API de procesamiento
 
 ### Rutas Protegidas (requieren auth)
 
