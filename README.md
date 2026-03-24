@@ -21,6 +21,8 @@ FacturaAI es una aplicación SaaS que utiliza OCR inteligente e IA para extraer 
 - 📊 **JSON Estructurado** - Datos listos para integrar
 - 🔑 **API Keys** - Gestiona claves para integración
 - 💳 **Suscripciones** - Planes Free, Pro y Enterprise con Mercado Pago
+- 🎨 **Landing Page** - Página pública con demo interactiva (requiere auth)
+- 📈 **Dashboard** - Panel de usuario con estadísticas y gestión
 
 ## 🛠️ Stack
 
@@ -28,38 +30,71 @@ FacturaAI es una aplicación SaaS que utiliza OCR inteligente e IA para extraer 
 - **Lenguaje:** TypeScript
 - **Estilos:** TailwindCSS
 - **Componentes:** shadcn/ui
-- **Estado:** React Query + Zustand
+- **Estado:** Zustand (auth-store, ui-store)
 - **API Client:** Axios con interceptors
 - **Validación:** Zod
+- **UI:** React Sonner para toasts
 
-## 🔒 Seguridad
-
-- Headers de seguridad (HSTS, X-Frame-Options, CSP, etc.)
-- Validación de inputs con Zod
-- Sanitización de archivos subidos
-- Rate limit handling
-- Tokens JWT con refresh automático
-- Middleware para rutas protegidas
-
-## 📁 Estructura del Proyecto
+## 🗂️ Estructura del Proyecto
 
 ```
 src/
-├── app/
-│   ├── (auth)/           # Login, Register
-│   ├── (dashboard)/       # Dashboard pages
-│   └── api/              # API routes
+├── app/                          # Next.js App Router
+│   ├── (auth)/                  # Grupo de rutas auth
+│   │   ├── login/              # Página de login
+│   │   └── register/           # Página de registro
+│   ├── (dashboard-group)/      # Grupo de rutas protegidas
+│   │   ├── layout.tsx          # Layout del dashboard (sidebar)
+│   │   ├── dashboard/          # Página principal dashboard
+│   │   ├── upload/             # Procesar facturas
+│   │   ├── jobs/               # Historial de jobs
+│   │   ├── api-keys/           # Gestión de API keys
+│   │   ├── subscription/       # Gestión de suscripción
+│   │   └── settings/           # Configuración de usuario
+│   ├── api/                    # API routes (proxies)
+│   │   └── proxy/             # Endpoints hacia backend
+│   ├── page.tsx               # Landing page pública
+│   └── layout.tsx             # Layout raíz
 ├── components/
-│   ├── ui/              # Componentes shadcn/ui
-│   └── providers/       # React Query provider
+│   ├── ui/                    # Componentes shadcn/ui
+│   ├── providers/             # Providers (Query)
+│   └── sections/              # Secciones de la landing
+│       ├── header.tsx         # Navbar
+│       ├── hero.tsx          # Hero section
+│       ├── how-it-works.tsx  # Cómo funciona
+│       ├── demo.tsx          # Demo interactiva (auth required)
+│       ├── features.tsx      # Características
+│       ├── api-section.tsx   # Sección API
+│       ├── pricing.tsx       # Sección de precios
+│       └── footer.tsx        # Footer
 ├── lib/
-│   ├── api/             # API layer con interceptors
-│   ├── constants.ts      # Constantes de la app
-│   ├── security.ts       # Validación y sanitización
-│   └── utils.ts         # Utilidades
-├── stores/              # Zustand stores
-├── types/               # TypeScript interfaces
-└── middleware.ts       # Auth middleware
+│   ├── api/                  # Capa de API
+│   │   ├── client.ts         # Axios client
+│   │   ├── auth.ts           # Endpoints auth
+│   │   ├── jobs.ts          # Endpoints jobs
+│   │   ├── keys.ts          # Endpoints API keys
+│   │   ├── subscription.ts  # Endpoints suscripciones
+│   │   └── rate-limit.ts    # Manejo de rate limits
+│   ├── constants.ts         # Constantes de la app
+│   ├── security.ts          # Validación y sanitización
+│   └── utils.ts             # Utilidades
+├── stores/                   # Zustand stores
+│   ├── auth-store.ts        # Estado de autenticación
+│   └── ui-store.ts          # Estado de UI
+├── types/                    # TypeScript interfaces
+│   ├── auth.ts              # Tipos de autenticación
+│   ├── jobs.ts             # Tipos de jobs
+│   ├── api-keys.ts         # Tipos de API keys
+│   ├── subscription.ts     # Tipos de suscripciones
+│   └── index.ts            # Export centralizado
+├── hooks/                    # Custom hooks
+│   ├── use-media-query.ts  # Hook para media queries
+│   └── use-file-upload.ts  # Hook para upload de archivos
+├── services/                 # Servicios
+│   └── api.ts              # API service
+├── config/                   # Configuración
+│   └── index.ts            # Config general
+└── middleware.ts           # Auth middleware
 ```
 
 ## 🚀 Inicio Rápido
@@ -103,13 +138,38 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ## 📝 Scripts Disponibles
 
-| Script             | Descripción                             |
-| ------------------ | --------------------------------------- |
-| `npm run dev`      | Inicia el servidor de desarrollo        |
-| `npm run build`    | Construye la aplicación para producción |
-| `npm run start`    | Inicia el servidor de producción        |
-| `npm run lint`     | Ejecuta ESLint                          |
-| `npm run lint:fix` | Corrige errores de lint automáticamente |
+| Script          | Descripción                             |
+| --------------- | --------------------------------------- |
+| `npm run dev`   | Inicia el servidor de desarrollo        |
+| `npm run build` | Construye la aplicación para producción |
+| `npm run start` | Inicia el servidor de producción        |
+| `npm run lint`  | Ejecuta ESLint                          |
+
+## 🔐 Flujo de Autenticación
+
+### Rutas Públicas (sin auth)
+
+- `/` - Landing page completa (visible para todos)
+- `/login` - Página de login
+- `/register` - Página de registro
+- `/api/proxy/process` - API de procesamiento
+
+### Rutas Protegidas (requieren auth)
+
+- `/dashboard` - Panel principal
+- `/upload` - Procesar facturas
+- `/jobs` - Historial de procesamiento
+- `/api-keys` - Gestión de API keys
+- `/subscription` - Planes y facturación
+- `/settings` - Configuración de cuenta
+
+## 💳 Planes de Precios
+
+| Plan           | Precio      | Características                                                                                    |
+| -------------- | ----------- | -------------------------------------------------------------------------------------------------- |
+| **Free**       | $0/mes      | 10 facturas/mes, extracción básica, soporte email                                                  |
+| **Pro**        | $4,900/mes  | Facturas ilimitadas, extracción avanzada, soporte prioritario, API keys, exportación JSON          |
+| **Enterprise** | $14,900/mes | Todo en Pro + facturación mensual, soporte dedicado, integraciones personalizadas, SLA garantizado |
 
 ## 🌐 Deploy en Vercel
 
@@ -169,7 +229,10 @@ vercel --prod
 | Método | Endpoint                     | Descripción          |
 | ------ | ---------------------------- | -------------------- |
 | GET    | `/v1/subscriptions/plans`    | Listar planes        |
+| GET    | `/v1/subscriptions/current`  | Plan actual          |
 | POST   | `/v1/subscriptions/checkout` | Iniciar checkout MP  |
+| PATCH  | `/v1/subscriptions/pause`    | Pausar suscripción   |
+| PATCH  | `/v1/subscriptions/resume`   | Reanudar suscripción |
 | DELETE | `/v1/subscriptions`          | Cancelar suscripción |
 
 ## 🎨 Sistema de Diseño
