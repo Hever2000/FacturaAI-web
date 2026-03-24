@@ -24,4 +24,6 @@ export interface User {
   monthly_limit: number;
   monthly_used: number;
   monthly_remaining: number;
+  jobs_count?: number;
+  jobs_this_month?: number;
 }
