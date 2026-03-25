@@ -1,5 +1,4 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'https://facturaai.onrender.com/v1';
+export const API_BASE_URL = '/api/proxy';
 
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'facturaai_access_token',

@@ -33,9 +33,10 @@ class ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const token = this.getToken();
+    const isFormData = options.body instanceof FormData;
 
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       'X-Request-ID': crypto.randomUUID(),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...fetchOptions.headers,
@@ -128,18 +129,20 @@ class ApiClient {
   }
 
   post<T>(endpoint: string, data?: unknown, options?: ApiClientOptions): Promise<T> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? (data as FormData) : data ? JSON.stringify(data) : undefined,
     });
   }
 
   patch<T>(endpoint: string, data?: unknown, options?: ApiClientOptions): Promise<T> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? (data as FormData) : data ? JSON.stringify(data) : undefined,
     });
   }
 
@@ -152,41 +155,23 @@ class ApiClient {
     file: File,
     onProgress?: (progress: number) => void
   ): Promise<T> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const formData = new FormData();
-      formData.append('file', file);
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append('file', file);
 
-      const token = this.getToken();
-
-      if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
-
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable && onProgress) {
-          onProgress((e.loaded / e.total) * 100);
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            resolve(JSON.parse(xhr.responseText));
-          } catch {
-            resolve(xhr.responseText as T);
-          }
-        } else {
-          reject(new Error(`UPLOAD_FAILED:${xhr.status}`));
-        }
-      });
-
-      xhr.addEventListener('error', () => reject(new Error('UPLOAD_FAILED')));
-      xhr.addEventListener('timeout', () => reject(new Error('UPLOAD_TIMEOUT')));
-
-      xhr.open('POST', `${this.baseUrl}${endpoint}`);
-      xhr.send(formData);
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
     });
+
+    if (!response.ok) {
+      throw new Error(`UPLOAD_FAILED:${response.status}`);
+    }
+
+    return response.json();
   }
 }
 
