@@ -1,32 +1,38 @@
-import { NextRequest } from 'next/server';
+export const runtime = 'nodejs';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://facturaai.onrender.com/v1';
+async function handler(req: Request, { params }: { params: { path: string[] } }) {
+  const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-async function handler(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
-  const { path } = await params;
-  const url = `${API_BASE_URL}/${path.join('/')}`;
+  if (!backendUrl) {
+    return new Response('Missing BACKEND URL', { status: 500 });
+  }
 
-  console.log(`[PROXY] ${req.method} ${url}`);
+  const url = `${backendUrl}/${params.path.join('/')}`;
 
-  const headers = new Headers(req.headers);
-  headers.delete('host');
-
-  const body = req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined;
+  console.log(`[PROXY] ${req.method} → ${url}`);
 
   try {
+    const headers = new Headers(req.headers);
+
+    headers.delete('host');
+    headers.delete('content-length');
+
     const res = await fetch(url, {
       method: req.method,
       headers,
-      body,
-    });
+      body: req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined,
+    } as RequestInit);
 
     return new Response(res.body, {
       status: res.status,
       headers: res.headers,
     });
   } catch (error) {
-    console.error(`[PROXY] Error:`, error);
-    return Response.json({ error: 'Proxy request failed' }, { status: 502 });
+    console.error('[PROXY ERROR]', error);
+
+    return new Response(JSON.stringify({ error: 'Proxy failed', details: String(error) }), {
+      status: 500,
+    });
   }
 }
 
@@ -35,3 +41,4 @@ export { handler as POST };
 export { handler as PUT };
 export { handler as PATCH };
 export { handler as DELETE };
+export { handler as OPTIONS };
