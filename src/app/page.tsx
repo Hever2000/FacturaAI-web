@@ -1,7 +1,7 @@
 import { Header } from '@/components/sections/header';
 import { Hero } from '@/components/sections/hero';
-import { HowItWorks } from '@/components/sections/how-it-works';
 import { Demo } from '@/components/sections/demo';
+import { HowItWorks } from '@/components/sections/how-it-works';
 import { Features } from '@/components/sections/features';
 import { APISection } from '@/components/sections/api-section';
 import { PricingSection } from '@/components/sections/pricing';
@@ -12,8 +12,8 @@ export default function Home() {
     <main className="relative">
       <Header />
       <Hero />
-      <HowItWorks />
       <Demo />
+      <HowItWorks />
       <Features />
       <APISection />
       <PricingSection />
